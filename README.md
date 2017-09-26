@@ -59,7 +59,7 @@ where,
 -d/--min-depth                   Minimum depth of coverage of the off target regions to
                                  analyse (default 10000). 
 -q/--probe-seq                   The fastq file for probe sequences.
--t/--threads                     Number of threads for alignment.
+-t/--threads                     Number of threads for alignment (default 1).
 -p/--prefix                      Prefix of the output files (default ./out).
 </pre>
     
