@@ -44,23 +44,27 @@ or
 
 ## Subsequent analysis
 
-A script file _off_target_probes.sh_ used to conduct the subsequent analysis to XXX is provided in this repository. To run this script file,
+A script file _off_target_probes.sh_ used to conduct the subsequent analysis to identify off target probes is provided in this repository. To run this script file,
 
-    bash off_target_probes.sh -b target_regions.bed -r ref.fasta -a ms_sorted.bam -w 1000 -d 10000 -q probes.fq -t 4 -p out
+    bash off_target_probes.sh -b target_regions.bed -r ref.fasta -a ms_sorted.bam -w 1000 -d 10000 -x 500 -q probes.txt -t 4 -p out
 
 where,
 
 <pre>
--b/--target-bed                  Bed file of the targe regions. 
--r/--reference                   Reference genome fasta file. 
--a/--bam                         XXX. 
--w/--window-size                 Window size for statistics of the depth of coverage of
-                                 the off targe regions (default 1000).
--d/--min-depth                   Minimum depth of coverage of the off target regions to
-                                 analyse (default 10000). 
--q/--probe-seq                   The file for probe sequences.
--t/--threads                     Number of threads for alignment (default 1).
--p/--prefix                      Prefix of the output files (default ./out).
+
+      -b/--target-bed                  Bed file of the target regions.
+      -r/--reference                   Reference genome fasta file.
+      -a/--bam                         Bam file of CapSim simulated reads aligned to reference
+                                       genome.
+      -w/--window-size                 Window size for statistics of the depth of coverage of
+                                       the off target regions (default 1000).
+      -d/--min-depth                   Minimum depth of base coverage of the off target regions
+                                       to analyse (default 10000).
+      -x/--padding-size                Extension/padding size to the up and downstream of the
+                                       target regions (default 500).
+      -q/--probe-seq                   Text file containing the probe ID and sequence.
+      -t/--threads                     Number of threads for alignment (default 1).
+      -p/--prefix                      Prefix of the output files (default ./out).
 </pre>
     
 The following tools should be installed and added to system path.
