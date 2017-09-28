@@ -12,7 +12,7 @@ printUsage() {
     echo "                                       the off targe regions (default 1000)."
     echo "      -d/--min-depth                   Minimum depth of coverage of the off target regions to"
     echo "                                       analyse (default 10000). "
-    echo "      -q/--probe-seq                   The fastq file for probe sequences."
+    echo "      -q/--probe-seq                   The file for probe sequences."
     echo "      -t/--threads                     Number of threads for alignment (default 1)."
     echo "      -p/--prefix                      Prefix of the output files (default ./out)."
     echo ""
@@ -123,25 +123,38 @@ echo "      PROBE SEQ      = $PROBE_SEQ"
 echo "      THREADS        = $THREADS"
 echo "      PREFIX OUT     = $PREFIX_OUT"
 
-: <<"SKIP"
-bedtools complement -i Target_regions_500.bed -g hg19.genome > Target_regions_500_complement.bed
+STEP=1
 
-bedtools intersect -abam MS_hg19_primary_sorted.bam -b Target_regions_500_complement.bed > MS_hg19_primary_sorted_target_500_complement.bam
+echo "["`date`"]" STEP $((STEP++)): Generate reference index
+samtools faidx $REFERENCE 
 
-samtools index MS_hg19_primary_sorted_target_500_complement.bam MS_hg19_primary_sorted_target_500_complement.bai
+echo "["`date`"]" STEP $((STEP++)):
+awk '{print $1"\t"$2}' "$REFERENCE".fai > "$PREFIX_OUT"_$(basename $REFERENCE).genome
 
-awk 'BEGIN{step=1000}{num=($3-$2)/step; for(i=0;i<num-1;i++) print $1,$2+step*i,$2+step*(i+1)-1; if(step*int(num)!=$3-$2) print $1,$2+step*int(num),$3;}' Target_regions_500_complement.bed > Target_regions_500_complement_1Kb.bed 
+echo "["`date`"]" STEP $((STEP++)):
+bedtools complement -i $TARGET_BED -g "$PREFIX_OUT"_$(basename $REFERENCE).genome | awk -v w="$WINDOW_SIZE" '{num=($3-$2)/w; for(i=0;i<num-1;i++) print $1"\t"($2+w*i)"\t"($2+w*(i+1)-1); if(w*int(num)!=$3-$2) print $1"\t"($2+w*int(num))"\t"$3;}' > "$PREFIX_OUT"_target_regions_complement.bed
 
-samtools bedcov Target_regions_500_complement_1Kb.bed MS_hg19_primary_sorted_target.bam > MS_hg19_primary_sorted_target_complement_1kb.bedcov
+echo "["`date`"]" STEP $((STEP++)):
+bedtools intersect -abam $BAM -b "$PREFIX_OUT"_target_regions_complement.bed > "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_target_complement.bam
 
-awk '{if ($4>10000) {print $1"\t"$2"\t"$3"\t"}}' MS_hg19_primary_sorted_target_complement_1kb.bedcov > MS_off_target_regions.bed
+echo "["`date`"]" STEP $((STEP++)):
+samtools index "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_target_complement.bam "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_target_complement.bai
 
-bedtools getfasta -fi hg19.fasta -bed MS_off_target_regions.bed -fo MS_off_target_regions.fas
+echo "["`date`"]" STEP $((STEP++)):
+samtools bedcov "$PREFIX_OUT"_target_regions_complement.bed "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_target_complement.bam | awk -v d="$MIN_DEPTH" '{if ($4>d) {print $1"\t"$2"\t"$3"\t"}}' > "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.bed
 
-bwa index -a bwtsw -p MS_off_target_regions MS_off_target_regions.fas
+echo "["`date`"]" STEP $((STEP++)):
+bedtools getfasta -fi $REFERENCE -bed "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.bed -fo "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.fas
 
-bwa mem -t 8 -Y -c 1000 MS_off_target_regions probes.fastq | samtools view -@8 -bS | samtools sort -@8 -o MS_off-target_alignement_sorted.bam && samtools index MS_off-target_alignement_sorted.bam MS_off-target_alignement_sorted.bai
+echo "["`date`"]" STEP $((STEP++)):
+bwa index -a bwtsw "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.fas 
 
-samtools view -F4 MS_off-target_alignement_sorted.bam | cut -f1 | sort -u > MS_off-target_alignement_probes.txt
+echo "["`date`"]" STEP $((STEP++)):
+tail -n +2 $PROBE_SEQ | awk '{printf(">%s:%s\n%s\n",$1,$2,$3)}' > "$PREFIX_OUT"_"$(basename $PROBE_SEQ)".fa
 
-SKIP
+echo "["`date`"]" STEP $((STEP++)):
+bwa mem -t $THREADS -Y -c 1000 "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.fas "$PREFIX_OUT"_"$(basename $PROBE_SEQ)".fa | samtools view -@"$THREADS" -bS | samtools sort -@"$THREADS" -o "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.bam && samtools index "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.bam "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.bai
+
+echo "["`date`"]" STEP $((STEP++)):
+samtools view -F4 "$PREFIX_OUT"_`echo $(basename $BAM) | sed 's/.bam$//g'`_off_target_regions.bam | cut -f1 | sort -u > "$PREFIX_OUT"_off_target_probes.txt
+
