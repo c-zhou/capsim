@@ -115,15 +115,15 @@ The threshold of the base coverage filtering could be specified by the awk param
 
     bedtools getfasta -fi ref.fasta -bed out_off_target_regions.bed -fo out_off_target_regions.fas
     
-9\. generate bwa index files for the off target region fasta file,
+10\. generate bwa index files for the off target region fasta file,
 
     bwa index -a bwtsw out_off_target_regions.fas
 
-10\. align the probe sequences to the off target region fasta file,
+11\. align the probe sequences to the off target region fasta file,
 
     bwa mem -t 4 -Y -c 1000 out_off_target_regions.fas probes.fa | samtools view -@4 -bS | samtools sort -@4 -o out_off_target_regions.bam && samtools index out_off_target_regions.bam out_off_target_regions.bai
     
-11\. extract the off target alignment probe sequences,
+12\. extract the off target alignment probe sequences,
 
     samtools view -F4 out_off_target_regions.bam | cut -f1 | sort -u > out_off_target_probes.txt
     
