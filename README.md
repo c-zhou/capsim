@@ -58,7 +58,7 @@ where,
                                  the off targe regions (default 1000).
 -d/--min-depth                   Minimum depth of coverage of the off target regions to
                                  analyse (default 10000). 
--q/--probe-seq                   The fastq file for probe sequences.
+-q/--probe-seq                   The file for probe sequences.
 -t/--threads                     Number of threads for alignment (default 1).
 -p/--prefix                      Prefix of the output files (default ./out).
 </pre>
@@ -69,9 +69,17 @@ The following tools should be installed and added to system path.
 * [bwa](http://bio-bwa.sourceforge.net/)
 * [bedtools](https://github.com/arq5x/bedtools2)
 
-**_The script file consists of ten main commands which could be run step by step._**
+**_The script file consists of 11 main commands which could be run step by step._**
 
-1\. generate a bed file represents the complementary regions of the target regions,
+1\. generate reference index file,
+    
+    samtools faidx ref.fasta
+
+2\. generate whole genome bed file,
+
+    awk '{print $1"\t"$2}' ref.fasta > out_ref.fasta.bed
+
+3\. generate a bed file represents the complementary regions of the target regions,
 
     bedtools complement -i target_regions.bed -g ref.fasta > out_target_regions_complement.bed
 
