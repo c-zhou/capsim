@@ -46,7 +46,7 @@ or
 
 A script file _off_target_probes.sh_ used to conduct the subsequent analysis to identify off target probes is provided in this repository. To run this script file,
 
-    bash off_target_probes.sh -b target_regions.bed -r ref.fasta -a ms_sorted.bam -w 1000 -d 10000 -x 500 -q probes.txt -t 4 -p out
+    bash off_target_probes.sh -b target_regions.bed -r ref.fasta -a cap_sim.bam -w 1000 -d 10000 -x 500 -q probes.txt -t 4 -p out
 
 where,
 
@@ -79,37 +79,37 @@ The following tools should be installed and added to system path.
     
     samtools faidx ref.fasta
 
-2\. generate whole genome bed file,
+2\. generate genome file for bedtools,
 
-    awk '{print $1"\t"$2}' ref.fasta > out_ref.fasta.bed
+    awk '{print $1"\t"$2}' ref.fasta.fai > ref.genome
 
-3\. generate a bed file represents the complementary regions of the target regions,
+3\. generate fasta file of probe sequences,
 
-    bedtools complement -i target_regions.bed -g ref.fasta > out_target_regions_complement.bed
+    tail -n +2 probes.txt | awk '{printf(">%s:%s\n%s\n",$1,$2,$3)}' > probes.fa
 
-2\. generate a bam file contains alignment records that mapped to the complementary regions,
+4\. generate target bed file with extra regions upstream and downstream,
 
-    bedtools intersect -abam ms_sorted.bam -b out_target_regions_complement.bed > out_ms_sorted_complement.bam
+    bedtools slop -i target_regions.bed -g ref.genome -b 500 > target_regions_500bp.bed
     
-3\. generate index file for the bam file,
+5\. generate a bed file of regions in a genome that are not covered by the target bed file,
 
-    samtools index out_ms_sorted_complement.bam out_ms_sorted_complement.bai
+    bedtools complement -i target_regions_500bp.bed -g ref.genome | awk -v w=100 '{num=($3-$2)/w; for(i=0;i<num-1;i++) print $1"\t"($2+w*i)"\t"($2+w*(i+1)-1); if(w*int(num)!=$3-$2) print $1"\t"($2+w*int(num))"\t"$3;}' > target_regions_complement.bed
     
-4\. generate a bed file represents 1Kb windows of the complementary regions,
+This file will be used to calculate the depth of coverage of the bam file across the off target regions. Window size other than 1Kb could be used here. A smaller window size will generally result in more precise statistics but will be more time-consuming. The window size could be changed by the awk parameter _w_.
+ 
+6\. generate a bam file of alignments which overlap with the bed file,
 
-    awk -v w=1000 '{num=($3-$2)/w; for(i=0;i<num-1;i++) print $1"\t"($2+w*i)"\t"($2+w*(i+1)-1); if(w*int(num)!=$3-$2) print $1"\t"($2+w*int(num))"\t"$3;}' out_target_regions_complement.bed > out_target_regions_complement_1Kb.bed
+    bedtools intersect -abam cap_sim.bam -b target_regions_complement.bed > out_complement.bam
 
-This file will be used to calculate the depth of coverage of the bam file across the complemetary regions. Window size other than 1Kb could be used here. A smaller window size will generally result in more precise statistics but will be more time-consuming. The window size could be changed by the awk parameter _w_.
-
-5\. calculate the depth of coverage of the bam file across the complemetary regions,
-
-    samtools bedcov out_target_regions_complement_1Kb.bed out_ms_sorted_complement.bam > out_ms_sorted_complement_1Kb.bedcov
+7\. generate an alignment index,
     
-6\. filter the complementary regions according to the depth of coverage,
-
-    awk -v d=10000 '{if ($4>d) print $1"\t"$2"\t"$3}' out_ms_sorted_complement_1Kb.bedcov > out_ms_off_target_regions.bed
+    samtools index out_complement.bam out_complement.bai
     
-The threshold of the depth of coverage could be specified by the awk parameter _d_.
+8\. generate a base coverage,
+
+    samtools bedcov target_regions_complement.bed out_complement.bam | awk -v d="10000" '{if ($4>d) {print $1"\t"$2"\t"$3"\t"}}' > out_off_target_regions.bed
+    
+The threshold of the base coverage filtering could be specified by the awk parameter _d_.
 
 7\. generate the fasta file of the off target regions,
 
