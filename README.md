@@ -85,7 +85,7 @@ The following tools should be installed and added to system path.
     
 4\. generate a bed file represents 1Kb windows of the complementary regions,
 
-    awk -v w=1000 '{num=($3-$2)/w; for(i=0;i<num-1;i++) print $1"\t"($2+step*i)"\t"($2+step*(i+1)-1); if(w*int(num)!=$3-$2) print $1"\t"($2+step*int(num))"\t"$3;}' out_target_regions_complement.bed > out_target_regions_complement_1Kb.bed
+    awk -v w=1000 '{num=($3-$2)/w; for(i=0;i<num-1;i++) print $1"\t"($2+w*i)"\t"($2+w*(i+1)-1); if(w*int(num)!=$3-$2) print $1"\t"($2+w*int(num))"\t"$3;}' out_target_regions_complement.bed > out_target_regions_complement_1Kb.bed
 
 This file will be used to calculate the depth of coverage of the bam file across the complemetary regions. Window size other than 1Kb could be used here. A smaller window size will generally result in more precise statistics but will be more time-consuming. The window size could be changed by the awk parameter _w_.
 
