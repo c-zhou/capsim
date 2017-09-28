@@ -125,6 +125,6 @@ The threshold of the base coverage filtering could be specified by the awk param
     
 12\. extract the off target alignment probe sequences,
 
-    samtools view -F4 out_off_target_regions.bam | cut -f1 | sort -u > out_off_target_probes.txt
+    samtools view -F4 out_off_target_regions.bam | cut -f1 | sort -u > out_off_target_probes.txt
     
 
