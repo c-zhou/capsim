@@ -111,20 +111,20 @@ This file will be used to calculate the depth of coverage of the bam file across
     
 The threshold of the base coverage filtering could be specified by the awk parameter _d_.
 
-7\. generate the fasta file of the off target regions,
+9\. generate a fasta sequence file for off_target regions,
 
-    bedtools getfasta -fi ref.fasta -bed out_ms_off_target_regions.bed -fo out_ms_off_target_regions.fasta
+    bedtools getfasta -fi ref.fasta -bed out_off_target_regions.bed -fo out_off_target_regions.fas
     
-8\. generate bwa index files for the off target region fasta file,
+9\. generate bwa index files for the off target region fasta file,
 
-    bwa index -a bwtsw -p out_ms_off_target_regions out_ms_off_target_regions.fasta
+    bwa index -a bwtsw out_off_target_regions.fas
 
-9\. align the probe sequences to the off target region fasta file,
+10\. align the probe sequences to the off target region fasta file,
 
-    bwa mem -t 8 -Y -c 1000 out_ms_off_target_regions probes.fastq | samtools view -@8 -bS | samtools sort -@8 -o out_ms_off_target_regions.bam && samtools index out_ms_off_target_regions.bam out_ms_off_target_regions.bai
+    bwa mem -t 4 -Y -c 1000 out_off_target_regions.fas probes.fa | samtools view -@4 -bS | samtools sort -@4 -o out_off_target_regions.bam && samtools index out_off_target_regions.bam out_off_target_regions.bai
     
-10\. extract the off target alignment probe sequences,
+11\. extract the off target alignment probe sequences,
 
-    samtools view -F4 out_ms_off_target_regions.bam | cut -f1 | sort -u > out_ms_off_target_alignment_probes.txt
+    samtools view -F4 out_off_target_regions.bam | cut -f1 | sort -u > out_off_target_probes.txt
     
 
