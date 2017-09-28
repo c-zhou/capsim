@@ -73,7 +73,7 @@ The following tools should be installed and added to system path.
 * [bwa](http://bio-bwa.sourceforge.net/)
 * [bedtools](https://github.com/arq5x/bedtools2)
 
-**_The script file consists of 11 main commands which could be run step by step._**
+**_The script file consists of 12 main commands which could be run step by step._**
 
 1\. generate reference index file,
     
